@@ -1,6 +1,12 @@
 # 🎮 Game Management System
 
+Proje videosu: https://www.youtube.com/watch?v=7AqlOC4fYDs
+
 Modern ve güvenli oyun yönetim sistemi. Kullanıcılar hesap oluşturabilir, oyunlarını yönetebilir.
+
+![indexsayfası](indeximg.png)
+
+
 
 ## 📋 Özellikler
 
