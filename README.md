@@ -1,6 +1,7 @@
 # 🎮 Game Management System
 
 Proje videosu: https://www.youtube.com/watch?v=7AqlOC4fYDs
+Web Linki: http://95.130.171.20/~st23360859744/index.php
 
 Modern ve güvenli oyun yönetim sistemi. Kullanıcılar hesap oluşturabilir, oyunlarını yönetebilir.
 
@@ -20,7 +21,9 @@ Modern ve güvenli oyun yönetim sistemi. Kullanıcılar hesap oluşturabilir, o
   - Oyun ekleme, düzenleme, silme
   - Oyun listesi görüntüleme
   - Kategori bazlı organize etme
-
+ 
+  - 
+![registersayfası](registerimg.png)
 
 ## 🗂️ Dosya Yapısı
 
@@ -59,7 +62,7 @@ game-management-system/
 - Oyunlarınızı listeleyin, düzenleyin veya silin
 
 
-
+![dashsayfası](dashimg.png)
 
 
 ### Teknolojiler
