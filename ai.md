@@ -574,3 +574,177 @@ config.php dosyasını oluştur ve içinde DB_HOST, DB_USER, DB_PASS, DB_NAME sa
 dashboard.php dosyasına require_once 'config.php'; ekle.
 
 Sonra veritabanı bağlantısını mysqli ile yap.
+
+
+# Warning: Undefined variable $stmtUser in /home/st23360859744/public_html/dashboard.php on line 16
+
+Fatal error: Uncaught Error: Call to a member function bind_param() on null in /home/st23360859744/public_html/dashboard.php:16 Stack trace: #0 {main} thrown in /home/st23360859744/public_html/dashboard.php on line 16
+
+
+ChatGPT:
+Bu hata, $stmtUser değişkeninin null (yani tanımsız veya başarısız olmuş) olmasından kaynaklanıyor. Yani şu satır:
+
+php
+Kopyala
+Düzenle
+$stmtUser = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+başarısız olmuş ve $stmtUser değişkeni oluşturulamamış.
+
+✅ 1. Adım: Hatanın nedenini anlamak
+Bu durum genelde şu sebeplerden olur:
+
+$conn veritabanı bağlantısı başarısız (ama bunu önceki hatalardan çözdük gibi).
+
+users tablosu gerçekten yok (phpMyAdmin'de kontrol et).
+
+SQL sorgusunda yazım hatası var (burada görünmüyor).
+
+config.php düzgün yüklenmemiş.
+
+✅ 2. Adım: Kodu kontrol ve düzeltme
+Lütfen dashboard.php dosyanın ilk 20 satırını tam olarak paylaş (özellikle $stmtUser satırıyla birlikte), ama büyük ihtimalle şöyle görünmeli:
+
+php
+Kopyala
+Düzenle
+<?php
+session_start();
+require_once 'config.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Kullanıcının adını çek
+$stmtUser = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$stmtUser->bind_result($fullname);
+$stmtUser->fetch();
+$stmtUser->close();
+Eğer bu kodu kullandıysan ve yine de $stmtUser = $conn->prepare(...) kısmı null döndürüyorsa, bu bağlantıda sorun var demektir.
+
+✅ 3. Adım: Hatanın kesin sebebini anlamak için debug ekle
+dashboard.php içinde prepare() başarısızsa hata gösterelim:
+
+php
+Kopyala
+Düzenle
+$stmtUser = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+if (!$stmtUser) {
+    die("Hazırlama hatası: " . $conn->error);
+}
+Bu kodu eklersen sana tam olarak neden başarısız olduğunu gösterecek.
+
+✅ Ekstra kontrol
+phpMyAdmin → dbstorage23360859744 veritabanının içinde users tablosu gerçekten var mı?
+
+İstersen sen dashboard.php kodunun tamamını paylaş, birlikte temiz ve çalışan halini oluşturabiliriz. Yardımcı olmaktan memnuniyet duyarım.
+
+
+
+
+
+
+
+
+Şunu dedin:
+<?php
+require_once 'config.php';
+session_start();
+
+// Giriş yapılmamışsa login sayfasına yönlendir
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Kullanıcı bilgilerini al
+$user_id = $_SESSION['user_id'];
+
+$stmt = $conn->prepare("SELECT * FROM game_records WHERE user_id = ?");
+
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userResult = $stmtUser->get_result();
+$user = $userResult->fetch_assoc();
+
+// Son 5 oyun kaydını al
+$stmtGames = $mysqli->prepare("
+    SELECT game_name, game_mode, score, level_reached, date_played 
+    FROM game_records 
+    WHERE user_id = ? 
+    ORDER BY date_played DESC 
+    LIMIT 5
+");
+$stmtGames->bind_param("i", $user_id);
+$stmtGames->execute();
+$gamesResult = $stmtGames->get_result();
+?>
+
+
+ChatGPT:
+Teşekkürler Elif, şimdi net şekilde görüyoruz hataları. dashboard.php dosyandaki sorunlar:
+
+🚫 Hatalar
+Tanımsız $stmtUser kullanımı:
+
+php
+Kopyala
+Düzenle
+$stmt = $conn->prepare(...);
+$stmtUser->bind_param(...) // ← $stmtUser tanımlı değil
+→ $stmtUser yerine $stmt kullanmalısın, çünkü onu tanımlamışsın.
+
+İki farklı veritabanı bağlantı değişkeni karışıklığı:
+
+php
+Kopyala
+Düzenle
+$stmtGames = $mysqli->prepare(...);
+→ Yukarıda $conn kullanıyorsun, burada ise $mysqli. Tutarsız.
+
+✅ Doğru Hali
+Aşağıda düzenlenmiş, hatasız ve tutarlı versiyonu:
+
+php
+Kopyala
+Düzenle
+<?php
+require_once 'config.php';
+session_start();
+
+// Giriş yapılmamışsa login sayfasına yönlendir
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Kullanıcı bilgilerini al
+$stmt = $conn->prepare("SELECT fullname FROM users WHERE id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$userResult = $stmt->get_result();
+$user = $userResult->fetch_assoc();
+
+// Son 5 oyun kaydını al
+$stmtGames = $conn->prepare("
+    SELECT game_name, game_mode, score, level_reached, date_played 
+    FROM game_records 
+    WHERE user_id = ? 
+    ORDER BY date_played DESC 
+    LIMIT 5
+");
+$stmtGames->bind_param("i", $user_id);
+$stmtGames->execute();
+$gamesResult = $stmtGames->get_result();
+?>
+💡 Ekstra Tavsiyeler
+config.php içinde $conn olarak tanımladıysan her yerde onu kullan.
+
+Hataları daha rahat görmek için error_reporting(E_ALL); ini_set('display_errors', 1); satırını en başa ekleyebilirsin.
